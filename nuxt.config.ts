@@ -9,8 +9,8 @@ export default defineNuxtConfig({
   // Tambahkan runtime config untuk environment variables
   runtimeConfig: {
     public: {
-      apiBase: process.env.API_URL || 'http://localhost:8000/api',
-      storageUrl: process.env.STORAGE_URL || 'http://localhost:8000/storage'
+      apiBase: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+      storageUrl: process.env.NUXT_PUBLIC_STORAGE_URL || 'http://localhost:8000/storage'
     }
   },
   
