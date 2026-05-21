@@ -147,7 +147,6 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    // $fetch langsung mengembalikan data object dari Laravel
     const data = await $fetch(API_PATH, {
       method: 'POST',
       headers: {
@@ -159,13 +158,16 @@ const handleLogin = async () => {
       },
     })
 
-    // Karena statusnya 200 OK, berarti data user PASTI ada di sini 👇
-    if (data && data.user) {
-      // Simpan data user ke session/local storage
+    // KITA PERBAIKI LOGIKANYA DI SINI 👇
+    // Kita cek apakah data user dibungkus di dalam 'data.user' atau langsung ada di 'data'
+    const targetUser = data.user || data
+
+    if (targetUser && targetUser.name && targetUser.email) {
+      // Simpan data user ke storage
       const userData = {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
+        id: targetUser.id || 1,
+        name: targetUser.name,
+        email: targetUser.email,
         loginTime: new Date().toISOString()
       }
 
@@ -177,15 +179,15 @@ const handleLogin = async () => {
         sessionStorage.setItem('isLoggedIn', 'true')
       }
 
-      alert(`Selamat datang, ${data.user.name}!`)
+      alert(`Selamat datang, ${targetUser.name}!`)
       router.push('/buku')
     } else {
-      alert(data.message || 'Login gagal! Format data dari server tidak sesuai.')
+      // Jika masih tidak terbaca, kita alert isi data aslinya biar kelihatan
+      alert('Login gagal! Server merespons: ' + JSON.stringify(data))
     }
 
   } catch (err) {
     console.error('Error aslinya:', err)
-    // Jika password salah atau email tidak terdaftar (biasanya status 401/422)
     const errorMsg = err.data?.message || 'Gagal terhubung ke server atau password salah!'
     alert(errorMsg)
   } finally {
