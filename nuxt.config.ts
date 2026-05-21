@@ -13,10 +13,18 @@ export default defineNuxtConfig({
     }
   },
   
-  // TAMBAHKAN ROUTE RULES PROXY INI 👇
+  // PERBAIKAN BLOCK PROXY & HEADERS DI SINI 👇
   routeRules: {
     '/api/**': { 
-      proxy: 'https://laravel-backending.infinityfreeapp.com/api/**' 
+      // 1. Alihkan request langsung ke backend InfinityFree
+      proxy: 'https://laravel-backending.infinityfreeapp.com/api/**',
+      
+      // 2. Suntikkan header browser asli agar dikira manusia oleh proteksi AES Bot InfinityFree
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
     }
   },
   
