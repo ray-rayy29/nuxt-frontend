@@ -175,12 +175,11 @@ const form = ref({
   password_confirmation: ''
 })
 
-const config = useRuntimeConfig()
-const API_URL = config.public.apiBase
+// === PAKAI RUTE RELATIF UTK REGISTER PROXY ===
+const API_PATH = '/api/register'
 
 // Handle Register
 const handleRegister = async () => {
-  // Validasi client-side
   if (!form.value.name || !form.value.email || !form.value.password || !form.value.password_confirmation) {
     alert('Semua field harus diisi!')
     return
@@ -199,31 +198,27 @@ const handleRegister = async () => {
   loading.value = true
 
   try {
-    const res = await fetch(`${API_URL}/register`, {
+    // GANTI fetch MENJADI $fetch BAWAAN NUXT 3 👇
+    await $fetch(API_PATH, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({
+      body: {
         name: form.value.name,
         email: form.value.email,
         password: form.value.password,
         password_confirmation: form.value.password_confirmation
-      }),
+      },
     })
 
-    const data = await res.json()
+    alert('Registrasi berhasil! Silakan login.')
+    router.push('/')
 
-    if (res.ok) {
-      alert('Registrasi berhasil! Silakan login.')
-      router.push('/')
-    } else {
-      alert(data.message || 'Registrasi gagal!')
-    }
   } catch (err) {
     console.error('Error:', err)
-    alert('Gagal terhubung ke server!')
+    const errorMsg = err.data?.message || 'Gagal terhubung ke server!'
+    alert(errorMsg)
   } finally {
     loading.value = false
   }
