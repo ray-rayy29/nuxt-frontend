@@ -133,8 +133,8 @@ const form = ref({
   password: ''
 })
 
-const config = useRuntimeConfig()
-const API_URL = config.public.apiBase
+// === SEKARANG KITA PAKAI RUTE RELATIF UNTUK PROXY ===
+const API_PATH = '/api/login'
 
 // Handle Login
 const handleLogin = async () => {
@@ -146,45 +146,44 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    const res = await fetch(`${API_URL}/login`, {
+    // GANTI fetch MENJADI $fetch BADAAN NUXT 3 👇
+    const data = await $fetch(API_PATH, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({
+      body: {
         email: form.value.email,
         password: form.value.password
-      }),
+      },
     })
 
-    const data = await res.json()
-
-    if (res.ok) {
-      // Simpan data user
-      const userData = {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        loginTime: new Date().toISOString()
-      }
-
-      if (rememberMe.value) {
-        localStorage.setItem('user', JSON.stringify(userData))
-        localStorage.setItem('isLoggedIn', 'true')
-      } else {
-        sessionStorage.setItem('user', JSON.stringify(userData))
-        sessionStorage.setItem('isLoggedIn', 'true')
-      }
-
-      alert(`Selamat datang, ${data.user.name}!`)
-      router.push('/buku')
-    } else {
-      alert(data.message || 'Login gagal!')
+    // $fetch otomatis mengubah response menjadi JSON objek, tidak perlu 'await res.json()' lagi!
+    
+    // Simpan data user
+    const userData = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      loginTime: new Date().toISOString()
     }
+
+    if (rememberMe.value) {
+      localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('isLoggedIn', 'true')
+    } else {
+      sessionStorage.setItem('user', JSON.stringify(userData))
+      sessionStorage.setItem('isLoggedIn', 'true')
+    }
+
+    alert(`Selamat datang, ${data.user.name}!`)
+    router.push('/buku')
+
   } catch (err) {
     console.error('Error:', err)
-    alert('Gagal terhubung ke server!')
+    // Ambil pesan error dari backend jika ada, kalau tidak ada tampilkan pesan default
+    const errorMsg = err.data?.message || 'Gagal terhubung ke server!'
+    alert(errorMsg)
   } finally {
     loading.value = false
   }
