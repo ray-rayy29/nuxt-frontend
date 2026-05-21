@@ -137,6 +137,7 @@ const form = ref({
 const API_PATH = '/api/login'
 
 // Handle Login
+// Handle Login yang sudah diperbaiki
 const handleLogin = async () => {
   if (!form.value.email || !form.value.password) {
     alert('Email dan password harus diisi!')
@@ -146,7 +147,7 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    // GANTI fetch MENJADI $fetch BADAAN NUXT 3 👇
+    // $fetch langsung mengembalikan data object dari Laravel
     const data = await $fetch(API_PATH, {
       method: 'POST',
       headers: {
@@ -158,31 +159,34 @@ const handleLogin = async () => {
       },
     })
 
-    // $fetch otomatis mengubah response menjadi JSON objek, tidak perlu 'await res.json()' lagi!
-    
-    // Simpan data user
-    const userData = {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      loginTime: new Date().toISOString()
-    }
+    // Karena statusnya 200 OK, berarti data user PASTI ada di sini 👇
+    if (data && data.user) {
+      // Simpan data user ke session/local storage
+      const userData = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        loginTime: new Date().toISOString()
+      }
 
-    if (rememberMe.value) {
-      localStorage.setItem('user', JSON.stringify(userData))
-      localStorage.setItem('isLoggedIn', 'true')
+      if (rememberMe.value) {
+        localStorage.setItem('user', JSON.stringify(userData))
+        localStorage.setItem('isLoggedIn', 'true')
+      } else {
+        sessionStorage.setItem('user', JSON.stringify(userData))
+        sessionStorage.setItem('isLoggedIn', 'true')
+      }
+
+      alert(`Selamat datang, ${data.user.name}!`)
+      router.push('/buku')
     } else {
-      sessionStorage.setItem('user', JSON.stringify(userData))
-      sessionStorage.setItem('isLoggedIn', 'true')
+      alert(data.message || 'Login gagal! Format data dari server tidak sesuai.')
     }
-
-    alert(`Selamat datang, ${data.user.name}!`)
-    router.push('/buku')
 
   } catch (err) {
-    console.error('Error:', err)
-    // Ambil pesan error dari backend jika ada, kalau tidak ada tampilkan pesan default
-    const errorMsg = err.data?.message || 'Gagal terhubung ke server!'
+    console.error('Error aslinya:', err)
+    // Jika password salah atau email tidak terdaftar (biasanya status 401/422)
+    const errorMsg = err.data?.message || 'Gagal terhubung ke server atau password salah!'
     alert(errorMsg)
   } finally {
     loading.value = false
