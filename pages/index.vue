@@ -147,7 +147,7 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    const data = await $fetch(API_PATH, {
+    const data = await $fetch('/api/login', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
