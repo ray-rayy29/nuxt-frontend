@@ -89,7 +89,7 @@ const form = ref({
   password: ''
 })
 
-// PERBAIKAN: Gunakan $fetch bawaan Nuxt agar rute dilempar lewat Proxy Config
+// Gantilah fungsi handleLogin di dalam pages/index.vue dengan ini:
 const handleLogin = async () => {
   if (!form.value.email || !form.value.password) {
     alert('Email dan password harus diisi!')
@@ -111,14 +111,19 @@ const handleLogin = async () => {
       }
     })
 
-    // Siasati struktur objek response Laravel
-    const targetUser = data.user || data
+    // LOG UNTUK TRACING: Buka Inspect Element (F12) -> Console di browser untuk melihat isi aslinya
+    console.log('Respons asli dari Laravel:', data)
 
-    if (targetUser && targetUser.email) {
+    // Pengecekan super fleksibel untuk membaca berbagai model return dari Laravel
+    // Baik berupa data.user, data.data, ataupun langsung objek user itu sendiri
+    const targetUser = data?.user || data?.data || data
+
+    if (targetUser && (targetUser.email || targetUser.name)) {
       const userData = {
         id: targetUser.id || 1,
-        name: targetUser.name,
+        name: targetUser.name || 'User',
         email: targetUser.email,
+        token: data?.token || data?.access_token || null, // Ambil token jika Laravel menggunakan Sanctum/Passport
         loginTime: new Date().toISOString()
       }
 
@@ -130,15 +135,17 @@ const handleLogin = async () => {
         sessionStorage.setItem('isLoggedIn', 'true')
       }
 
-      alert(`Selamat datang, ${targetUser.name}!`)
+      alert(`Selamat datang, ${userData.name}!`)
       router.push('/buku')
     } else {
-      alert('Login gagal! Respon tidak sesuai.')
+      // Jika formatnya benar-benar tidak terduga, tampilkan isi responnya agar mudah didebug
+      alert('Login gagal! Struktur respon server: ' + JSON.stringify(data))
     }
   } catch (err) {
-    console.error('Error:', err)
-    // Ambil pesan error asli dari Laravel jika ada
-    const errorMsg = err.data?.message || 'Gagal terhubung ke server atau akun salah!'
+    console.error('Error saat login:', err)
+    
+    // Ambil pesan error spesifik dari Laravel (misal: "Password salah" atau "Email tidak terdaftar")
+    const errorMsg = err.data?.message || err.data?.error || 'Gagal terhubung ke server atau akun salah!'
     alert(errorMsg)
   } finally {
     loading.value = false
